@@ -2,6 +2,9 @@ require('./config/config');
 
 
 const express = require('express')
+const mongoose = require('mongoose')
+const {MongoClient} = require('mongodb');
+
 const app = express()
 
 const bodyParser = require('body-parser')
@@ -12,40 +15,38 @@ app.use(bodyParser.urlencoded({ extended: false }))
 // parse application/json
 app.use(bodyParser.json())
 
+//Archivo de rutas
+app.use(require('./routes/usuario'));
 
-//Peticion Get de Usuarios
-app.get('/usuario', function (req, res) {
-    res.json("Get de usuario")
-});
 
-//Peticion Post de Usuarios
-app.post('/usuario', function (req, res) {
-    let body = req.body;
 
-    if(body.nombre === undefined){
-        res.status(400).json({
-            OK: false,
-            mensaje: "El nombre es necesario"
-        })
-    }else{
-        res.json({persona : body})
+
+
+async function main(){
+
+    const uri = "mongodb+srv://srendon:CxVy1LVi7YFk8G1@cluster0-b9m4c.mongodb.net/cafe"
+
+    const client = new MongoClient(uri)
+
+
+    try {
+        await client.connect();
+        await listDatabases(client);
+        mongoose.connect('mongodb+srv://srendon:CxVy1LVi7YFk8G1@cluster0-b9m4c.mongodb.net/cafe',{useNewUrlParser: true, useCreateIndex: true});
+        console.log("Conexion a base de datos exitosa ")
+    } catch (e) {
+        console.log(e);
+    } finally {
+        await client.close();
     }
+}
 
+main().catch(console.error);
 
-});
-
-//Peticion Put de Usuarios
-app.put('/usuario/:id', function (req, res) {
-    let id = req.params.id;
-    res.json({
-        id
-    });
-});
-
-//Peticion Delete de Usuarios
-app.delete('/usuario', function (req, res) {
-    res.json('delete usuario')
-});
+async function listDatabases(client){
+    databasesList = await client.db().admin().listDatabases();
+    databasesList.databases.forEach(db => console.log(` - ${db.name}`));
+};
 
 
 app.listen(process.env.PORT)
